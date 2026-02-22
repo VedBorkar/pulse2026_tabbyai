@@ -1,6 +1,6 @@
 """
-Tab Harvester — FastAPI Backend
-================================
+TabbyAi — FastAPI Backend
+=========================
 POST /api/summarize
   • Accepts JSON with url, title, content
   • Uses Vertex AI (Gemini Pro) to generate a 2-sentence summary + 3 tags
@@ -12,6 +12,7 @@ POST /api/summarize
 import json
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -19,11 +20,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 import vertexai
-from vertexai.generative_models import GenerativeModel, Part
+from vertexai.generative_models import GenerativeModel
 from supabase import create_client, Client
 
 # ── Load environment variables ──────────────────────────────────────────────
-load_dotenv()
+env_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
 GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
@@ -45,7 +47,7 @@ SYSTEM_PROMPT = (
 )
 
 model = GenerativeModel(
-    model_name="gemini-pro",
+    model_name="gemini-2.0-flash",
     system_instruction=SYSTEM_PROMPT,
 )
 
@@ -53,11 +55,11 @@ model = GenerativeModel(
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ── FastAPI app ──────────────────────────────────────────────────────────────
-app = FastAPI(title="Tab Harvester API", version="1.0.0")
+app = FastAPI(title="TabbyAi API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origin_regex=r"chrome-extension://.*",
     allow_methods=["*"],
     allow_headers=["*"],
 )
