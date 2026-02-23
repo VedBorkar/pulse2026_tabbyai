@@ -8,10 +8,27 @@
  */
 
 const API_ENDPOINT = "http://localhost:8000/api/summarize";
-const IDLE_DETECTION_INTERVAL_SECONDS = 30;
+const DEFAULT_IDLE_SECONDS = 100;
 
-// Set the idle detection interval for testing
-chrome.idle.setDetectionInterval(IDLE_DETECTION_INTERVAL_SECONDS);
+// Load idle interval from storage and apply it
+async function applyIdleInterval() {
+  const result = await chrome.storage.local.get("idleSeconds");
+  const seconds = result.idleSeconds || DEFAULT_IDLE_SECONDS;
+  chrome.idle.setDetectionInterval(seconds);
+  console.log(`[Tab Harvester] Idle detection interval set to ${seconds}s`);
+}
+
+// Apply on startup
+applyIdleInterval();
+
+// Re-apply whenever the user changes the setting from the popup
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.idleSeconds) {
+    const newVal = changes.idleSeconds.newValue || DEFAULT_IDLE_SECONDS;
+    chrome.idle.setDetectionInterval(newVal);
+    console.log(`[Tab Harvester] Idle interval updated to ${newVal}s`);
+  }
+});
 
 /**
  * Listen for idle state changes.
@@ -45,7 +62,7 @@ chrome.idle.onStateChanged.addListener(async (newState) => {
     );
 
     for (const tab of candidateTabs) {
-      // Skip chrome:// internal pages, extensions, etc. — they block scripting
+      // Skip chrome:// internal pages, extensions, etc.
       if (
         !tab.url ||
         tab.url.startsWith("chrome://") ||
@@ -61,36 +78,18 @@ chrome.idle.onStateChanged.addListener(async (newState) => {
       }
 
       try {
-        // Extract page content via scripting API
-        const [result] = await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: () => ({
-            title: document.title,
-            url: window.location.href,
-            bodyText: document.body.innerText,
-          }),
-        });
-
-        const pageData = result?.result;
-        if (!pageData) {
-          console.warn(
-            `[Tab Harvester] No data extracted from tab ${tab.id} (${tab.url})`
-          );
-          continue;
-        }
-
         console.log(
-          `[Tab Harvester] Extracted data from: "${pageData.title}" — sending to API...`
+          `[Tab Harvester] Processing: "${tab.title}" — sending to API...`
         );
 
-        // POST the extracted data to the summarization API
+        // Use tab metadata from chrome.tabs API (no scripting needed)
         const response = await fetch(API_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            url: pageData.url,
-            title: pageData.title,
-            content: pageData.bodyText,
+            url: tab.url,
+            title: tab.title || "Untitled",
+            content: tab.title || "",
           }),
         });
 
@@ -119,6 +118,4 @@ chrome.idle.onStateChanged.addListener(async (newState) => {
 });
 
 // Log when the service worker starts
-console.log(
-  `[Tab Harvester] Service worker loaded. Idle detection interval: ${IDLE_DETECTION_INTERVAL_SECONDS}s`
-);
+console.log("[Tab Harvester] Service worker loaded.");

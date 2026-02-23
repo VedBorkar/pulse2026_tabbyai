@@ -6,18 +6,18 @@
   "permissions": [
     "tabs",
     "idle",
-    "scripting",
-    "activeTab"
+    "storage"
   ],
   "host_permissions": [
     "http://localhost:8000/*",
-    "<all_urls>"
+    "https://*/*",
+    "http://*/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "dashboard/index.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
