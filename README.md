@@ -288,37 +288,6 @@ Immediate impact.
 No hardware changes required.
 
 ---
-
-# 🏆 Rubric Alignment
-
-## Project Idea
-Grounded in real usage statistics and vendor-confirmed resource costs.
-
-## Originality
-Existing browsers suspend tabs.
-We measure, eliminate, group, summarize, and restore.
-
-## Functionality
-Deterministic detection.
-Safe elimination.
-Full restoration.
-Quantifiable results.
-
-## Complexity
-Systems thinking + behavioral modeling + resource analytics.
-
-## Practicality
-Deployable immediately.
-Low friction.
-Measurable before/after.
-
-## Communication
-Clear metrics.
-Clear summary.
-Clear impact.
-
----
-
 # 🔮 Future Work
 
 - Weekly digital waste reports
